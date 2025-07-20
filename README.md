@@ -209,3 +209,45 @@ FROM supplier
 WHERE s_acctbal < 0 
 ```
 
+### 3. List the names of customers who have placed at least 5 orders, along with the total amount they have spent (sum of o_totalprice) and their nation name. Order the results by total spent in descending order.
+- Query result should include:
+  - c_name (customer name)
+  - n_name (nation name)
+  - order_count (number of orders placed)
+  - total_spent (total amount spent by the customer)
+ * Aggregate functions are not allowed in GROUP BY because they are calculated after that phase.*
+```sql
+SELECT customer.c_name, nation.n_name AS nation_name,
+       COUNT(orders.o_orderkey) AS order_count,
+       SUM(orders.o_totalprice) AS total_spent
+
+FROM customer
+
+JOIN orders ON customer.c_custkey = orders.o_custkey
+JOIN nation ON customer.c_nationkey = nation.n_nationkey
+
+GROUP BY c_name, nation.n_name,
+HAVING COUNT(orders.o_orderkey) >= 5
+ORDER BY total_spent DESC;
+
+```
+
+### 4. Find the top 10 suppliers who have supplied the largest total quantity of parts, and list their name, the total quantity supplied, and their nation name.
+
+*The JOIN clause starts with the table you're adding*
+
+```sql
+SELECT s_name, 
+       n_name,
+       SUM(lineitem.l_quantity) AS total_quantity
+
+FROM supplier
+
+JOIN nation ON supplier.s_nationkey = nation.n_nationkey
+JOIN lineitem ON supplier.s_suppkey = lineitem.l_suppkey
+
+GROUP BY s_name, n_name
+LIMIT 10;
+```
+
+
