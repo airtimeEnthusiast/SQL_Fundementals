@@ -16,6 +16,9 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 ## 🗂️ TPC-H Database Schema
 ![TPC-H Schema](./sample-data-tpch-schema.png)
 
+![Actual Schema](./actual-schema.png)
+
+
 ---
 
 ## ✨ Why TPC-H?
