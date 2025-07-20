@@ -16,6 +16,9 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 ## 🗂️ TPC-H Database Schema
 ![TPC-H Schema](./sample-data-tpch-schema.png)
 
+![Actual Schema](./actual-schema.png)
+
+
 ---
 
 ## ✨ Why TPC-H?
@@ -192,7 +195,17 @@ Below, add your queries as you study. For each, include:
 
 ### Example
 
-#### 1. List All Customers
+* Some attribute names might differ *
+
+#### 1. Grant Bob access to read and write data?
 ```sql
-SELECT * FROM customer LIMIT 10;
+GRANT SELECT, INSERT, UPDATE, DELETE ON customer TO bob;
 ```
+
+#### 2. Return the name, address, and phone number of all suppliers whose account balance is lower than 0:
+```sql
+SELECT s_name, s_address, s_phone
+FROM supplier
+WHERE s_acctbal < 0 
+```
+
