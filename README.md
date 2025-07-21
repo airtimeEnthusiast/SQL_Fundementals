@@ -250,4 +250,41 @@ GROUP BY s_name, n_name
 LIMIT 10;
 ```
 
+### 5. Find the names of parts that cost more than $100 (based on p_retailprice), along with their part type and size, sorted by price in descending order.
+
+*GROUP BY is used when you want to aggregate data — that is, to compute a value per group of rows.*
+
+```sql
+
+SELECT p_name, p_type, p_size, p_retailprice
+
+FROM part
+
+WHERE part.p_retailprice > 100
+ORDER BY part.p_retailprice DESC;
+```
+
+### 6. Find the total revenue (l_extendedprice * (1 - l_discount)) for each nation, and list them sorted by revenue in descending order.
+
+- *Since the revenue in TPC-H is based on customer purchases (orders + lineitems) — not supplier costs or inventory. We use the following join sequence.*
+  - *lineitem → orders → customer → nation*
+- *Do not do an implict join EVER!!*
+    ```sql
+      FROM lineitem, orders, customer, nation
+    ```
+    *As it will be inefficient and create a cartesean product on the tables.*
+  SELECT n_name, SUM(l_extendedprice * ( 1 - l_discount)) AS revenue
+```sql
+FROM lineitem
+ 
+
+JOIN orders ON lineitem.l_orderkey = orders.o_orderkey
+JOIN customer ON orders.o_custkey = customer.c_custkey
+JOIN nation ON customer.c_nationkey = nation.n_nationkey
+
+GROUP BY n_name
+ORDER BY revenue DESC
+```
+
+
 
