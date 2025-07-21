@@ -9,11 +9,11 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 2. [Why TPC-H?](#why-tpc-h)
 3. [SQL Primer](#sql-primer)
 4. [Practice Exam](#practice-exam)
-5. [Query Log](#query-log)
+6. [Examples](#examples)
 
 ---
 
-## 🗂️ TPC-H Database Schema
+## TPC-H Database Schema
 ![TPC-H Schema](./sample-data-tpch-schema.png)
 
 ![Actual Schema](./actual-schema.png)
@@ -21,25 +21,25 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 
 ---
 
-## ✨ Why TPC-H?
+## Why TPC-H?
 
 The TPC-H database is a standard for benchmarking decision support systems. Its schema and data are ideal for practicing complex SQL queries, including joins, aggregations, and subqueries.
 
 ---
 
-## 📘 SQL Primer
+## SQL Primer
 
 
 # SQL Primer: Concepts & Fundamentals
 
 Structured Query Language (SQL) is used for managing and querying relational databases.
 
-## 🧱 Tables
+## Tables
 A table is a collection of related data stored in rows and columns.
 - **Rows (Records):** Individual entries.
 - **Columns (Attributes):** Data fields of specific types (e.g., INTEGER, TEXT).
 
-## 🔑 Keys
+## Keys
 
 ### Primary Key
 - Uniquely identifies each row in a table.
@@ -50,7 +50,7 @@ A table is a collection of related data stored in rows and columns.
 - A field (or combination) in one table that refers to the primary key in another.
 - Maintains referential integrity between tables.
 
-## 🧾 SQL Query Types
+## SQL Query Types
 
 ### 1. Data Query Language (DQL)
 Used for querying data:
@@ -76,18 +76,18 @@ Used for permissions:
 GRANT, REVOKE
 ```
 
-## 🧠 Joins
+## Joins
 Used to combine rows from multiple tables.
 - **INNER JOIN:** Only matching rows.
 - **LEFT JOIN:** All from left, matching from right.
 - **RIGHT JOIN:** All from right, matching from left.
 - **FULL OUTER JOIN:** All rows with matches where possible.
 
-## 🧮 Aggregate Functions
+## Aggregate Functions
 Used for calculations on data:
 - `COUNT()`, `SUM()`, `AVG()`, `MAX()`, `MIN()`
 
-## 🧱 Constraints
+## Constraints
 - `NOT NULL`: Disallows null values.
 - `UNIQUE`: Disallows duplicate values.
 - `CHECK`: Ensures conditions.
@@ -95,7 +95,7 @@ Used for calculations on data:
 
 ---
 
-## 📝 Practice Exam
+## Practice Exam
 
 ### 🟢 Easy
 
@@ -182,18 +182,7 @@ HAVING COUNT(DISTINCT PS.PS_PARTKEY) > 1000;
 
 ---
 
-## 📝 Query Log
-
-Below, add your queries as you study. For each, include:
-
-- **Query Name/Goal**
-- **SQL Statement**
-- **Explanation/Notes**
-- **Results/Observations**
-
----
-
-### Example
+## Examples
 
 * Some attribute names might differ *
 
@@ -286,6 +275,17 @@ JOIN nation ON customer.c_nationkey = nation.n_nationkey
 
 GROUP BY n_name
 ORDER BY revenue DESC
+```
+
+### 7. Find the names, order ID, and price of orders for customers who have placed orders above the average total order price.
+```sql
+SELECT c_name, o_orderkey, o_totalprice
+FROM customer
+JOIN orders ON customer.c_custkey = orders.o_custkey
+WHERE orders.o_totalprice > (
+    SELECT AVG(o_totalprice)
+    FROM orders
+);
 ```
 
 
