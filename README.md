@@ -8,8 +8,7 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 1. [TPC-H Database Schema](#tpc-h-database-schema)
 2. [Why TPC-H?](#why-tpc-h)
 3. [SQL Primer](#sql-primer)
-4. [Practice Exam](#practice-exam)
-6. [Examples](#examples)
+4. [Examples](#examples)
 
 ---
 
@@ -92,95 +91,6 @@ Used for calculations on data:
 - `UNIQUE`: Disallows duplicate values.
 - `CHECK`: Ensures conditions.
 - `DEFAULT`: Sets a default value.
-
----
-
-## Practice Exam
-
-### 🟢 Easy
-
-1. **List all customers in the `CUSTOMER` table.**
-```sql
-SELECT * FROM CUSTOMER;
-```
-
-2. **Get the name and phone of all suppliers in the `SUPPLIER` table.**
-```sql
-SELECT S_NAME, S_PHONE FROM SUPPLIER;
-```
-
-3. **Find all parts with a size greater than 30.**
-```sql
-SELECT P_NAME, P_SIZE FROM PART WHERE P_SIZE > 30;
-```
-
-### 🟡 Intermediate
-
-4. **Count the number of orders per customer.**
-```sql
-SELECT O_CUSTKEY, COUNT(*) AS OrderCount
-FROM ORDERS
-GROUP BY O_CUSTKEY;
-```
-
-5. **Find the average account balance by nation.**
-```sql
-SELECT N.N_NAME, AVG(C.C_ACCTBAL) AS AvgBalance
-FROM CUSTOMER C
-JOIN NATION N ON C.C_NATIONKEY = N.N_NATIONKEY
-GROUP BY N.N_NAME;
-```
-
-6. **List all parts supplied by suppliers from 'UNITED STATES'.**
-```sql
-SELECT DISTINCT P.P_NAME
-FROM PART P
-JOIN PARTSUPP PS ON P.P_PARTKEY = PS.PS_PARTKEY
-JOIN SUPPLIER S ON PS.PS_SUPPKEY = S.S_SUPPKEY
-JOIN NATION N ON S.S_NATIONKEY = N.N_NATIONKEY
-WHERE N.N_NAME = 'UNITED STATES';
-```
-
-### 🔴 Advanced
-
-7. **Find the top 5 customers who placed the highest total price orders.**
-```sql
-SELECT O.O_CUSTKEY, SUM(O.O_TOTALPRICE) AS TotalSpent
-FROM ORDERS O
-GROUP BY O.O_CUSTKEY
-ORDER BY TotalSpent DESC
-LIMIT 5;
-```
-
-8. **Determine the most frequently shipped mode in LINEITEM.**
-```sql
-SELECT L_SHIPMODE, COUNT(*) AS Frequency
-FROM LINEITEM
-GROUP BY L_SHIPMODE
-ORDER BY Frequency DESC
-LIMIT 1;
-```
-
-9. **Calculate the revenue (extended price * (1 - discount)) for each nation.**
-```sql
-SELECT N.N_NAME, SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS Revenue
-FROM LINEITEM L
-JOIN ORDERS O ON L.L_ORDERKEY = O.O_ORDERKEY
-JOIN CUSTOMER C ON O.O_CUSTKEY = C.C_CUSTKEY
-JOIN NATION N ON C.C_NATIONKEY = N.N_NATIONKEY
-GROUP BY N.N_NAME
-ORDER BY Revenue DESC;
-```
-
-10. **Find suppliers who supply more than 1000 different parts.**
-```sql
-SELECT PS.PS_SUPPKEY, COUNT(DISTINCT PS.PS_PARTKEY) AS PartsSupplied
-FROM PARTSUPP PS
-GROUP BY PS.PS_SUPPKEY
-HAVING COUNT(DISTINCT PS.PS_PARTKEY) > 1000;
-```
-
----
 
 ## Examples
 
