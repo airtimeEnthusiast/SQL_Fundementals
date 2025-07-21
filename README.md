@@ -187,16 +187,99 @@ GROUP BY n_name
 ORDER BY revenue DESC
 ```
 
-### 7. Find the names, order ID, and price of orders for customers who have placed orders above the average total order price.
+### 7. Find the names, order ID, and price of the order for customers who have placed an order above the average total order price.
 ```sql
 SELECT c_name, o_orderkey, o_totalprice
 FROM customer
 JOIN orders ON customer.c_custkey = orders.o_custkey
+-- Nested query to calculate the average
 WHERE orders.o_totalprice > (
     SELECT AVG(o_totalprice)
     FROM orders
 );
 ```
 
+### 8. For each customer, show their name and the total number of orders they’ve placed.
+- Uses a setbased operation instead of a nested query for optimization
+```sql
+  SELECT c_name, HAVING COUNT(o_orderkey) > 0 AS order_count
+  FROM customer
+  JOIN orders ON customer.c_custkey = orders.o_custkey
+  GROUP BY c_name
+  ORDER BY order_count DESC
+```
 
+### 9. Top Orders per Customer with Revenue Rank & Change
+```sql
+WITH
+    ranked_orders AS (
+        -- Select customer name, order key, and total price
+        SELECT
+            c.c_name,
+            o.o_orderkey,
+            o.o_totalprice,
+            c.c_custkey,
+            -- Calculate the rank of each order based on total price for each customer
+            ROW_NUMBER() OVER (
+                PARTITION BY
+                    c_custkey
+                ORDER BY
+                    o_totalprice DESC
+            ) AS ranking,
+            -- Get the previous order's total price for each customer
+            LAG (o_totalprice) OVER (
+                PARTITION BY
+                    c_custkey
+                ORDER BY
+                    o_orderkey DESC
+            ) AS prev_price
+        FROM
+            customer c
+            JOIN orders o ON c.c_custkey = o.o_custkey
+    )
+-- Compute the difference between the current order's total price and the previous order's total price
+SELECT
+    c_name,
+    o_orderkey, 
+    ROUND(o_totalprice,1) AS total_price,
+    ROUND(o_totalprice - prev_price,1) AS price_diff,
+    CONCAT (
+        ROUND((o_totalprice - prev_price) / prev_price * 100),
+        '%'
+    ) AS percent_change
+FROM
+    ranked_orders
+WHERE
+    ranking <= 3
+    AND prev_price IS NOT NULL
+```
+#### 🧠 Step-by-Step Analysis
+
+#### 1. 🧱 CTE: `ranked_orders`
+
+This **Common Table Expression** prepares a ranked list of orders per customer along with their previous order’s price.
+
+```sql
+WITH ranked_orders AS (
+  ...
+)
+```
+##### Inside the CTE:
+  - c.c_name, o.o_orderkey, o.o_totalprice, c.c_custkey are selected.
+  - ROW_NUMBER() ranks each customer's orders from highest to    - lowest total price.
+  - LAG(o_totalprice) retrieves the previous order's total price, ordered by o_orderkey DESC.
+
+#### 2. 🧾 Main Query
+After the CTE, the outer query looks like:
+```sql
+SELECT ...
+FROM ranked_orders
+WHERE ranking <= 3 AND prev_price IS NOT NULL;
+```
+##### What it does:
+  - Filters to show only the top 3 orders per customer (ranking <= 3)
+  - Excludes the first order (since it has no prev_price)
+  - Calculates:
+    - price_diff: Difference between current and previous order price
+    - percent_change: Percentage change from the previous order's price
 
