@@ -215,7 +215,7 @@ WHERE s_acctbal < 0
   - n_name (nation name)
   - order_count (number of orders placed)
   - total_spent (total amount spent by the customer)
- * Aggregate functions are not allowed in GROUP BY because they are calculated after that phase.*
+- Aggregate functions are not allowed in GROUP BY because they are calculated after that phase.
 ```sql
 SELECT customer.c_name, nation.n_name AS nation_name,
        COUNT(orders.o_orderkey) AS order_count,
@@ -266,18 +266,20 @@ ORDER BY part.p_retailprice DESC;
 
 ### 6. Find the total revenue (l_extendedprice * (1 - l_discount)) for each nation, and list them sorted by revenue in descending order.
 
-- *Since the revenue in TPC-H is based on customer purchases (orders + lineitems) — not supplier costs or inventory. We use the following join sequence.*
+- Since the revenue in TPC-H is based on customer purchases *(orders + lineitems)* — not supplier costs or inventory. We use the following join sequence.
   - *lineitem → orders → customer → nation*
-- *Do not do an implict join EVER!!*
+- Do not do an *implicit join* EVER!!
     ```sql
       FROM lineitem, orders, customer, nation
     ```
-    *As it will be inefficient and create a cartesean product on the tables.*
-  SELECT n_name, SUM(l_extendedprice * ( 1 - l_discount)) AS revenue
+    - As it will be inefficient and create a Cartesian product on the tables.
+- *Explicit joins* are more structured, safer, and easier to maintain.
 ```sql
+SELECT n_name, SUM(l_extendedprice * ( 1 - l_discount)) AS revenue
+
+-- Explicit Join on *lineitem → orders → customer → nation*
 FROM lineitem
  
-
 JOIN orders ON lineitem.l_orderkey = orders.o_orderkey
 JOIN customer ON orders.o_custkey = customer.c_custkey
 JOIN nation ON customer.c_nationkey = nation.n_nationkey
