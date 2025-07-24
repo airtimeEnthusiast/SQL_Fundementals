@@ -25,10 +25,6 @@ Comprehensive review on SQL queries using the [TPC-H](https://www.tpc.org/tpch/)
 The TPC-H database is a standard for benchmarking decision support systems. Its schema and data are ideal for practicing complex SQL queries, including joins, aggregations, and subqueries.
 
 ---
-
-## SQL Primer
-
-
 # SQL Primer: Concepts & Fundamentals
 
 Structured Query Language (SQL) is used for managing and querying relational databases.
@@ -40,14 +36,24 @@ A table is a collection of related data stored in rows and columns.
 
 ## Keys
 
+### Candidate Key
+-   Any column(s) that can uniquely identify a row.
+-   **Example:** In a students table, both *student_id* and *email* could be candidate keys.
 ### Primary Key
-- Uniquely identifies each row in a table.
-- Only one primary key per table.
-- Cannot contain NULL values.
-
+-   The chosen candidate key that uniquely identifies each row (cannot be NULL).
+-   **Example:** *student_id INT PRIMARY KEY* in the students table.
+### Unique Key
+-   Ensures all values are unique; can allow a NULL (varies by DBMS).
+-   **Example:** *email VARCHAR UNIQUE* in the students table.
 ### Foreign Key
-- A field (or combination) in one table that refers to the primary key in another.
-- Maintains referential integrity between tables.
+-   References the primary key of another table to establish a relationship.
+-    **Example:** *student_id* in an enrollments table that references students(student_id).
+### Composite Key
+-   A key made of multiple columns that together uniquely identify a row.
+-    **Example:** In enrollments, *student_id* + *course_id* as a composite PRIMARY KEY.
+### Surrogate Key
+-   An artificial key like an auto-incremented ID used as the primary key.
+-   **Example:** id SERIAL PRIMARY KEY in a transactions table instead of using natural data.
 
 ## SQL Query Types
 
@@ -86,20 +92,91 @@ Used to combine rows from multiple tables.
 Used for calculations on data:
 - `COUNT()`, `SUM()`, `AVG()`, `MAX()`, `MIN()`
 
+## Data Types
+- Ensure values match the defined column type (e.g., `INT`, `VARCHAR`, `DATE`).
+    - **Example:** A column defined as `INT` won't accept text values
+
 ## Constraints
 - `NOT NULL`: Disallows null values.
 - `UNIQUE`: Disallows duplicate values.
 - `CHECK`: Ensures conditions.
 - `DEFAULT`: Sets a default value.
 
+## Normalization 
+
+### 1NF (First Normal Form)
+
+ **Goal:** Eliminate repeating groups and ensure atomicity (one value per cell).
+
+**Rules:**
+    - Each column must contain **atomic values** (no arrays or lists).
+    - Each column must contain **values of the same type**.
+    - Each row must be **unique**
+
+| StudentID | Name | Courses |
+| --- | --- | --- |
+| 1 | Alice | Math, Science |
+
+**Convert to 1NF:**
+
+| StudentID | Name | Course |
+| --- | --- | --- |
+| 1 | Alice | Math |
+| 1 | Alice | Science |
+
+### **2NF (Second Normal Form)**
+
+**Goal:** Remove **partial dependencies** (where a non-key column depends on part of a composite key).
+
+**Rules:**
+
+- Must be in **1NF**.
+- All non-key columns must be **fully dependent** on the **entire primary key**.
+
+**Goal:** Remove **partial dependencies** (where a non-key column depends on part of a composite key).
+
+ **Example: Not in 2NF (composite key issue):**
+
+| StudentID | CourseID | StudentName | CourseName |
+| --- | --- | --- | --- |
+
+**Convert to 2NF (split tables):**
+
+- **Students Table:** (StudentID, StudentName)
+- **Courses Table:** (CourseID, CourseName)
+- **Enrollments Table:** (StudentID, CourseID)
+
+### **3NF (Third Normal Form)**
+
+**Goal:** Remove **transitive dependencies** (when a non-key column depends on another non-key column).
+
+**Rules:**
+
+- Must be in **2NF**.
+- Non-key columns should depend **only** on the **primary key**.
+
+ **Example: Not in 3NF:**
+| EmployeeID | Name | DeptID | DeptName |
+| --- | --- | --- | --- |
+
+> DeptName depends on DeptID, not directly on EmployeeID.
+> 
+
+🚀 **Convert to 3NF:**
+
+- **Employee Table:** (EmployeeID, Name, DeptID)
+- **Department Table:** (DeptID, DeptName)
+
 ## Examples
 
 * Some attribute names might differ *
 
-#### 1. Grant Bob access to read and write data?
+#### 1. Grant Bob access to read and write customer data?
 ```sql
 GRANT SELECT, INSERT, UPDATE, DELETE ON customer TO bob;
 ```
+
+### 2. Create a table with a 
 
 #### 2. Return the name, address, and phone number of all suppliers whose account balance is lower than 0:
 ```sql
@@ -283,3 +360,136 @@ WHERE ranking <= 3 AND prev_price IS NOT NULL;
     - price_diff: Difference between current and previous order price
     - percent_change: Percentage change from the previous order's price
 
+### 9. Identify the Top Supplier per Nation by Revenue
+
+```sql 
+SELECT n_name, SUM(l_extendedprice * ( 1 - l_discount)) AS revenue
+FROM lineitem
+
+JOIN supplier ON l_suppkey = s_suppkey
+JOIN nation ON s_nationkey = n_nationkey
+
+WHERE l_shipdate BETWEEN DATE '1997-01-01' AND DATE '1997-12-31'
+
+GROUP BY n_name
+ORDER BY revenue DESC
+
+```
+
+### 10. Average Discount Given by Region for High-Value Orders
+
+```sql
+SELECT 
+    r.r_name, 
+    AVG(l.l_discount) AS avg_discount
+FROM 
+    lineitem l
+JOIN 
+    orders o ON l.l_orderkey = o.o_orderkey
+JOIN 
+    customer c ON o.o_custkey = c.c_custkey
+JOIN 
+    nation n ON c.c_nationkey = n.n_nationkey
+JOIN 
+    region r ON n.n_regionkey = r.r_regionkey
+WHERE 
+    o.o_totalprice > 300000
+GROUP BY 
+    r.r_name
+ORDER BY 
+    avg_discount DESC;
+```
+
+### 11. Find customers who placed at least 3 orders, each more expensive than the previous one.
+
+```sql
+-- Step 1: Rank each customer's orders by order date
+WITH
+    ranked_orders AS (
+        SELECT
+            o_orderkey,
+            o_custkey,
+            o_orderdate,
+            o_totalprice,
+            ROW_NUMBER() OVER (
+                PARTITION BY
+                    o.o_custkey
+                ORDER BY
+                    o.o_orderdate DESC
+            ) AS order_rank,
+            LAG (o_totalprice) OVER (
+                PARTITION BY
+                    o_custkey
+                ORDER BY
+                    o_orderdate DESC
+            ) AS prev_totalprice
+        FROM
+            orders o
+    ),
+    -- Step 2: Filter to only those orders where the current price > previous
+    increasing_orders AS (
+        SELECT
+            *
+        FROM
+            ranked_orders
+        WHERE
+            prev_totalprice IS NOT NULL
+            AND o_totalprice > prev_totalprice
+    ),
+    -- Step 3: Count how many increasing steps each customer has
+    customer_increase_counts AS (
+        SELECT
+            o_custkey,
+            COUNT(*) AS increase_steps
+        FROM
+            increasing_orders
+        GROUP BY
+            o_custkey
+    )
+SELECT
+    c.c_name,
+    c.c_custkey,
+    increase_steps + 1 AS order_count,
+    TRUE AS increasing_order_pattern
+FROM
+    customer_increase_counts cic
+    JOIN customer c ON cic.o_custkey = c.c_custkey
+WHERE
+    increase_steps >= 2
+ORDER BY
+    order_count DESC;
+```
+
+### 12. The total number of parts supplied by each supplier whose account balance is below 0:
+
+```sql
+SELECT s.s_name, COUNT(DISTINCT ps.ps_partkey) AS total_parts
+FROM supplier s
+JOIN partsupp ps ON s.s_suppkey = ps.ps_suppkey
+WHERE s.s_acctbal < 0
+GROUP BY s.s_name
+```
+
+### 13. The total number of parts supplied from each different nation (each nation has a different nationkey).
+```sql
+    SELECT n.n_name, COUNT(DISTINCT ps.ps_partkey) AS total_parts
+    FROM nation n
+    JOIN supplier s ON n.n_nationkey = s.s_nationkey
+    JOIN partsupp ps ON s.s_suppkey = ps.ps_suppkey
+    GROUP BY n.n_name
+```
+
+### 14. The distinct names of parts, each of which has been supplied by at least two nations
+```sql
+    SELECT p.p_name, COUNT(DISTINCT n_nationkey) AS nation_count
+    FROM part p, supplier s
+    JOIN partsupp ON s_suppkey = ps_suppkey
+    JOIN nation ON ps_nationkey = n_nationkey
+    WHERE nation_count >= 2
+    GROUP BY p.p_name
+```
+
+### 15. The names of all suppliers who supply the most number of parts
+
+
+### 16. Return the distinct names of suppliers, each of which has supplied at least two parts 
