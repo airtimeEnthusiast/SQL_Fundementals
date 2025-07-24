@@ -176,7 +176,41 @@ Used for calculations on data:
 GRANT SELECT, INSERT, UPDATE, DELETE ON customer TO bob;
 ```
 
-### 2. Create a table with a 
+### 2. Create a table
+- Primary key (PRIMARY KEY)
+- Auto-increment identity (GENERATED ALWAYS AS IDENTITY)
+- Foreign key with action (ON DELETE SET NULL)
+- Uniqueness (UNIQUE)
+- Defaults (DEFAULT now(), DEFAULT 'active')
+- Validation (CHECK (salary >= 0), enum-like check on status)
+- Indexing for faster lookups
+```sql
+-- Parent table
+CREATE TABLE departments (
+    department_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name          TEXT   NOT NULL UNIQUE,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Child table referencing departments
+CREATE TABLE employees (
+    employee_id   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    department_id BIGINT NOT NULL REFERENCES departments(department_id)
+                              ON DELETE SET NULL,
+    email         VARCHAR(255) NOT NULL UNIQUE,
+    first_name    TEXT NOT NULL,
+    last_name     TEXT NOT NULL,
+    salary        NUMERIC(12,2) CHECK (salary >= 0),
+    status        TEXT NOT NULL DEFAULT 'active'
+                       CHECK (status IN ('active','inactive','terminated')),
+    hired_at      DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+-- Helpful index for common queries
+CREATE INDEX idx_employees_department_created
+    ON employees(department_id, hired_at);
+****
+```
 
 #### 2. Return the name, address, and phone number of all suppliers whose account balance is lower than 0:
 ```sql
